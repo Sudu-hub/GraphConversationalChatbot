@@ -1,11 +1,24 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from backend.app.api.query import router as query_router
 from backend.app.utils.mapper import load_all_data
 from backend.app.api.graph import router as graph_router
 
 app = FastAPI()
 
+# ✅ ADD THIS (VERY IMPORTANT)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 data_store = load_all_data()
+
 app.include_router(graph_router)
+app.include_router(query_router)
 
 @app.get("/")
 def home():

@@ -1,16 +1,13 @@
 from fastapi import APIRouter
-from app.services.graph_builder import build_graph
+from pydantic import BaseModel
+
+from backend.app.services.query_engine import process_query
 
 router = APIRouter()
 
+class QueryRequest(BaseModel):
+    question: str
+
 @router.post("/query")
-def query_graph(data: dict):
-    query = data.get("query")
-
-    G = build_graph()
-
-    # SIMPLE LOGIC (can upgrade later)
-    if "order" in query.lower():
-        return {"answer": "Orders exist in the system. Try specifying ID."}
-
-    return {"answer": "Query understood but not implemented yet."}
+def query(req: QueryRequest):
+    return process_query(req.question)

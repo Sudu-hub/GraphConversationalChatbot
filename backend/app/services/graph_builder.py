@@ -5,14 +5,10 @@ def build_graph():
 
     nodes = []
     links = []
-
     added_nodes = set()
 
-    # ---------------------------
-    # HELPER FUNCTION
-    # ---------------------------
     def add_node(node_id, node_type, extra={}):
-        if node_id not in added_nodes:
+        if node_id and node_id not in added_nodes:
             nodes.append({
                 "id": node_id,
                 "type": node_type,
@@ -21,82 +17,99 @@ def build_graph():
             added_nodes.add(node_id)
 
     def add_edge(source, target, relation):
-        links.append({
-            "source": source,
-            "target": target,
-            "label": relation
-        })
+        if source and target:
+            links.append({
+                "source": source,
+                "target": target,
+                "label": relation
+            })
 
     # ---------------------------
-    # 1. CUSTOMERS → ORDERS
+    # CUSTOMER → ORDER
     # ---------------------------
     orders = data["orders"]
 
-    for _, row in orders.iterrows():
-        cust_id = f"CUST_{row.get('SoldToParty', 'UNK')}"
-        order_id = f"ORD_{row.get('SalesOrder', 'UNK')}"
+    print("Orders columns:", orders.columns)
 
-        add_node(cust_id, "customer")
+    for _, row in orders.iterrows():
+        order_id = f"ORD_{row.get('salesOrder')}"
+        cust_id = f"CUST_{row.get('soldToParty')}"
+
         add_node(order_id, "order", row.to_dict())
+        add_node(cust_id, "customer")
 
         add_edge(cust_id, order_id, "PLACED")
 
     # ---------------------------
-    # 2. ORDER → ITEMS → PRODUCT
+    # ORDER → ITEM → PRODUCT
     # ---------------------------
     items = data["order_items"]
 
+    print("Items columns:", items.columns)
+
     for _, row in items.iterrows():
-        order_id = f"ORD_{row.get('SalesOrder', 'UNK')}"
-        item_id = f"ITEM_{row.get('SalesOrder')}_{row.get('SalesOrderItem')}"
-        product_id = f"PROD_{row.get('Material', 'UNK')}"
+        order_id = f"ORD_{row.get('salesOrder')}"
+        item_id = f"ITEM_{row.get('salesOrder')}_{row.get('salesOrderItem')}"
+        product_id = f"PROD_{row.get('material')}"
 
         add_node(item_id, "order_item")
         add_node(product_id, "product")
 
         add_edge(order_id, item_id, "HAS_ITEM")
-        add_edge(item_id, product_id, "CONTAINS_PRODUCT")
+        add_edge(item_id, product_id, "PRODUCT")
 
     # ---------------------------
-    # 3. ORDER → DELIVERY
+    # ORDER → DELIVERY
     # ---------------------------
     delivery = data["delivery"]
 
+    print("Delivery columns:", delivery.columns)
+
     for _, row in delivery.iterrows():
-        order_id = f"ORD_{row.get('ReferenceSDDocument', 'UNK')}"
-        delivery_id = f"DEL_{row.get('DeliveryDocument', 'UNK')}"
+        delivery_id = f"DEL_{row.get('deliveryDocument')}"
+        order_ref = row.get("referenceSDDocument")
 
-        add_node(delivery_id, "delivery", row.to_dict())
+        if order_ref:
+            order_id = f"ORD_{order_ref}"
 
-        add_edge(order_id, delivery_id, "DELIVERED_AS")
+            add_node(delivery_id, "delivery", row.to_dict())
+            add_edge(order_id, delivery_id, "DELIVERED")
 
     # ---------------------------
-    # 4. DELIVERY → INVOICE
+    # DELIVERY → INVOICE
     # ---------------------------
     invoices = data["invoices"]
 
+    print("Invoice columns:", invoices.columns)
+
     for _, row in invoices.iterrows():
-        delivery_id = f"DEL_{row.get('ReferenceSDDocument', 'UNK')}"
-        invoice_id = f"INV_{row.get('BillingDocument', 'UNK')}"
+        invoice_id = f"INV_{row.get('billingDocument')}"
+        ref_doc = row.get("referenceSDDocument")
 
-        add_node(invoice_id, "invoice", row.to_dict())
+        if ref_doc:
+            delivery_id = f"DEL_{ref_doc}"
 
-        add_edge(delivery_id, invoice_id, "BILLED_AS")
+            add_node(invoice_id, "invoice", row.to_dict())
+            add_edge(delivery_id, invoice_id, "BILLED")
 
     # ---------------------------
-    # 5. INVOICE → PAYMENT
+    # INVOICE → PAYMENT
     # ---------------------------
     payments = data["finance_payment"]
 
+    print("Payments columns:", payments.columns)
+
     for _, row in payments.iterrows():
-        invoice_id = f"INV_{row.get('AccountingDocument', 'UNK')}"
-        payment_id = f"PAY_{row.get('AccountingDocument', 'UNK')}"
+        payment_id = f"PAY_{row.get('accountingDocument')}"
+        invoice_ref = row.get("accountingDocument")
 
-        add_node(payment_id, "payment", row.to_dict())
+        if invoice_ref:
+            invoice_id = f"INV_{invoice_ref}"
 
-        add_edge(invoice_id, payment_id, "PAID_BY")
+            add_node(payment_id, "payment", row.to_dict())
+            add_edge(invoice_id, payment_id, "PAID")
 
-    print(f"Graph built: {len(nodes)} nodes, {len(links)} edges")
+    print("✅ FINAL GRAPH:", len(nodes), "nodes,", len(links), "edges")
 
     return {
         "nodes": nodes,
