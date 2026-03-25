@@ -1,16 +1,17 @@
 import os
 import json
+import pandas as pd
 
 def load_folder(folder_name):
-    # Go to app folder
     base_dir = os.path.dirname(os.path.dirname(__file__))  
-    # This points to: backend/app/
-
     folder_path = os.path.join(base_dir, "data", folder_name)
 
-    print("Final path:", folder_path)
+    print("Loading from:", folder_path)
 
     all_data = []
+
+    if not os.path.exists(folder_path):
+        raise FileNotFoundError(f"{folder_path} does not exist")
 
     for file in os.listdir(folder_path):
         if file.endswith(".jsonl"):
@@ -22,4 +23,9 @@ def load_folder(folder_name):
                     if line:
                         all_data.append(json.loads(line))
 
-    return all_data
+    # ✅ Convert to DataFrame
+    df = pd.DataFrame(all_data)
+
+    print(f"{folder_name} loaded: {df.shape}")
+
+    return df
