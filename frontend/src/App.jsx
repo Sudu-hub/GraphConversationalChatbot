@@ -6,9 +6,10 @@ import { fetchGraph, sendQuery } from "./services/api";
 function App() {
   const [graphData, setGraphData] = useState(null);
   const [highlightIds, setHighlightIds] = useState([]);
-  const [highlightLinks, setHighlightLinks] = useState([]); // 🔥 NEW
+  const [highlightLinks, setHighlightLinks] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
 
+  // 🔥 Load graph
   useEffect(() => {
     fetchGraph()
       .then((data) => {
@@ -20,6 +21,7 @@ function App() {
       });
   }, []);
 
+  // 🔥 Chat → highlight
   const handleQuery = async (question) => {
     try {
       const res = await sendQuery(question);
@@ -27,13 +29,19 @@ function App() {
       console.log("QUERY RESPONSE:", res);
 
       setHighlightIds(res?.ids || []);
-      setHighlightLinks(res?.links || []); // 🔥 NEW
+      setHighlightLinks(res?.links || []);
 
     } catch (err) {
       console.error("Query error:", err);
       setHighlightIds([]);
       setHighlightLinks([]);
     }
+  };
+
+  // 🔥 CLICK HANDLER (IMPORTANT DEBUG)
+  const handleNodeClick = (node) => {
+    console.log("NODE CLICKED:", node); // 👈 MUST PRINT
+    setSelectedNode(node);
   };
 
   return (
@@ -45,7 +53,8 @@ function App() {
         display: "flex",
         alignItems: "center",
         padding: "0 20px",
-        borderBottom: "1px solid #e5e7eb"
+        borderBottom: "1px solid #e5e7eb",
+        fontWeight: "500"
       }}>
         Mapping / <b style={{ marginLeft: "5px" }}>Order to Cash</b>
       </div>
@@ -58,40 +67,41 @@ function App() {
           <GraphView
             data={graphData}
             highlightIds={highlightIds}
-            highlightLinks={highlightLinks} // 🔥 PASS
-            onNodeClick={setSelectedNode}
+            highlightLinks={highlightLinks}
+            onNodeClick={handleNodeClick} // 🔥 FIXED
           />
 
-          {/* NODE DETAILS PANEL */}
+          {/* 🔥 NODE DETAILS POPUP */}
           {selectedNode && (
             <div style={{
               position: "absolute",
-              right: 20,
-              top: 20,
-              width: "260px",
+              right: "20px",
+              top: "20px",
+              width: "280px",
               background: "white",
               border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              padding: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              zIndex: 20
+              borderRadius: "10px",
+              padding: "14px",
+              boxShadow: "0 6px 16px rgba(0,0,0,0.15)",
+              zIndex: 999,              // 🔥 VERY IMPORTANT
             }}>
-              <h4 style={{ marginBottom: "8px" }}>Node Details</h4>
+              <h4 style={{ marginBottom: "10px" }}>Node Details</h4>
 
               <p><b>ID:</b> {selectedNode.id}</p>
               <p><b>Type:</b> {selectedNode.type || "N/A"}</p>
 
+              {/* Optional extra data */}
               {selectedNode.data &&
                 Object.entries(selectedNode.data).map(([k, v]) => (
-                  <p key={k}><b>{k}:</b> {v}</p>
+                  <p key={k}><b>{k}:</b> {String(v)}</p>
                 ))
               }
 
               <button
                 onClick={() => setSelectedNode(null)}
                 style={{
-                  marginTop: "10px",
-                  padding: "6px 10px",
+                  marginTop: "12px",
+                  padding: "6px 12px",
                   background: "#ef4444",
                   color: "white",
                   border: "none",
