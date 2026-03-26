@@ -6,11 +6,10 @@ router = APIRouter()
 GRAPH_DATA = {"nodes": [], "links": []}
 
 
+GRAPH_DATA = build_graph()
+
 @router.get("/graph")
 def get_graph():
     global GRAPH_DATA
-
-    # 🔥 your existing graph builder
-    GRAPH_DATA = build_graph()   # <-- your function
-
+    GRAPH_DATA = build_graph()
     return GRAPH_DATA

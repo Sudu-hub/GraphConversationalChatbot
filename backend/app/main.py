@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.query import router as query_router
 from backend.app.utils.mapper import load_all_data
 from backend.app.api.graph import router as graph_router
+from backend.app.api.query import router as query_router
 
 app = FastAPI()
 
